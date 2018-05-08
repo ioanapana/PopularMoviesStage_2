@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">PopularMoviesStage_Two</string>
+    <string-array name="range_by">
+        <item>Popularity</item>
+        <item>Top Rated</item>
+        <item>Favourites</item>
+    </string-array>
+</resources>
