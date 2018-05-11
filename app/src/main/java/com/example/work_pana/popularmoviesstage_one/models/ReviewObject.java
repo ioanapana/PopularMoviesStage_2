@@ -9,7 +9,10 @@ public class ReviewObject implements Parcelable {
     //This variable stores the content of the review
     private String mContent;
 
-    protected ReviewObject(Parcel in) {
+    public ReviewObject(){
+
+    }
+    private ReviewObject(Parcel in) {
         mAuthor = in.readString();
         mContent = in.readString();
     }

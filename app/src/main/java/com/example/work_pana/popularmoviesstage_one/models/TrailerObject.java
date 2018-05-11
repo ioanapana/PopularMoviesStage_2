@@ -15,12 +15,16 @@ public class TrailerObject implements Parcelable {
         //This variable stores the YouTube site for each trailer
         private String mSiteTrailer;
 
-        public TrailerObject(String keyTrailer, String nameTrailer) {
+        public TrailerObject(){
+
+    }
+
+    public TrailerObject(String keyTrailer, String nameTrailer) {
             mKeyTrailer = keyTrailer;
             mNameTrailer = nameTrailer;
         }
 
-        protected TrailerObject(Parcel in) {
+        private TrailerObject(Parcel in) {
             mKeyTrailer = in.readString();
             mNameTrailer = in.readString();
             mSiteTrailer = in.readString();

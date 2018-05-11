@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
 import android.view.View;
@@ -15,10 +16,26 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+import com.example.work_pana.popularmoviesstage_one.adapters.MovieAdapterRV;
 import com.example.work_pana.popularmoviesstage_one.adapters.ReviewAdapterRV;
 import com.example.work_pana.popularmoviesstage_one.adapters.TrailersAdapterRV;
 import com.example.work_pana.popularmoviesstage_one.models.MovieUtils;
+import com.example.work_pana.popularmoviesstage_one.models.ReviewObject;
+import com.example.work_pana.popularmoviesstage_one.models.TrailerObject;
 import com.squareup.picasso.Picasso;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -48,19 +65,50 @@ public class DetailActivity extends AppCompatActivity {
 
     private RecyclerView mReviewRecycterView;
     private ReviewAdapterRV mReviewAdapterRv;
-    private RecyclerView mTrailerReciclerView;
+    private RecyclerView mTrailerRecyclerView;
     private TrailersAdapterRV mTrailerAdapterRV;
-//    private MovieAdapterRV movieAdapterRV;
+    private List<ReviewObject> mReviewList;
+    private List<TrailerObject> mTrailerList;
+    private RequestQueue mReviewsRequestQueue;
+    private RequestQueue mTrailersRequestQueue;
+    private String API_KEY = "api_key=df27df00b2916dd211edca6241aea543";
+
+
+    /////////////////////////////////////////////////////////MODIFICA!!!!
+    //Constants for creating the URL
+    private static final String BASE_URL
+            = "https://api.themoviedb.org/3/movie/";
+
+    private String MOVIE_ID;
+    private static String reviewsEndPoint = "/reviews?";
+    private static String trailersEndPoint = "/videos?";
+    private String reviewsURL;
+    private String trailersURL;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.movie_detail);
         ButterKnife.bind(this);
+//         MOVIE_ID = movieItem.getId();
 
-        mTrailerAdapterRV = findViewById(R.id.rv_trailer);
+
         mReviewRecycterView = findViewById(R.id.rv_reviews);
-//        movieAdapterRV = findViewById(R.id.rv_movie);
+        mReviewList = new ArrayList<>();
+        mReviewAdapterRv = new ReviewAdapterRV(getApplicationContext(), mReviewList);
+        RecyclerView.LayoutManager mReviewsLayoutManager = new LinearLayoutManager(DetailActivity.this, LinearLayoutManager.VERTICAL, false);
+        mReviewRecycterView.setLayoutManager(mReviewsLayoutManager);
+        mReviewRecycterView.setAdapter(mReviewAdapterRv);
+        mReviewRecycterView.setHasFixedSize(true);
+
+        mTrailerRecyclerView = findViewById(R.id.rv_trailer);
+        mTrailerList = new ArrayList<>();
+        mTrailerAdapterRV = new TrailersAdapterRV(getApplicationContext(), mTrailerList);
+        RecyclerView.LayoutManager mTrailersLayoutManager = new LinearLayoutManager(DetailActivity.this, LinearLayoutManager.VERTICAL, false);
+        mTrailerRecyclerView.setLayoutManager(mTrailersLayoutManager);
+        mTrailerRecyclerView.setAdapter(mTrailerAdapterRV);
+        mTrailerRecyclerView.setHasFixedSize(true);
 
 
         Intent intent = getIntent();
@@ -70,7 +118,9 @@ public class DetailActivity extends AppCompatActivity {
                 movieItem = intent.getParcelableExtra(EXTRA_MOVIE);
                 // Display the current selected movie title on the Action Bar
                 getSupportActionBar().setTitle(movieItem.getOriginalTitle());
+
                 populateUI();
+
             }
         }
 
@@ -78,6 +128,75 @@ public class DetailActivity extends AppCompatActivity {
             mIsFavourite = savedInstanceState.getBoolean(SAVE_STATE_FAVOURITE);
         }
 
+    }
+
+    private void parceTrailersJson() {
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, trailersURL, null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray trailersResultsJasonArray = response.getJSONArray("results");
+                            for (int i = 0; i < trailersResultsJasonArray.length(); i++) {
+                                JSONObject trailerResult = trailersResultsJasonArray.getJSONObject(i);
+                                TrailerObject trailerItem = new TrailerObject();
+
+                                trailerItem.setKeyTrailer(trailerResult.getString("key"));
+                                trailerItem.setNameTrailer(trailerResult.getString("name"));
+                                trailerItem.setSiteTrailer(trailerResult.getString("site"));
+
+                                mTrailerList.add(trailerItem);
+                            }
+                            mTrailerAdapterRV = new TrailersAdapterRV(DetailActivity.this, mTrailerList);
+                            mTrailerRecyclerView.setAdapter(mTrailerAdapterRV);
+                            mTrailerAdapterRV.notifyDataSetChanged();
+//                            mTrailerAdapterRV.setOnItemClickListener(DetailActivity.this);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.getStackTrace();
+            }
+        });
+        mReviewsRequestQueue = Volley.newRequestQueue(this);
+        mReviewsRequestQueue.add(request);
+    }
+
+    private void parceReviewsJson() {
+
+        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, reviewsURL, null,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            JSONArray reviewResultsJasonArray = response.getJSONArray("results");
+                            for (int i = 0; i < reviewResultsJasonArray.length(); i++) {
+                                JSONObject reviewrResult = reviewResultsJasonArray.getJSONObject(i);
+                                ReviewObject reviewItem = new ReviewObject();
+
+                                reviewItem.setAuthor(reviewrResult.getString("author"));
+                                reviewItem.setContent(reviewrResult.getString("content"));
+
+                                mReviewList.add(reviewItem);
+                            }
+                            mReviewAdapterRv = new ReviewAdapterRV(DetailActivity.this, mReviewList);
+                            mReviewRecycterView.setAdapter(mReviewAdapterRv);
+                            mReviewAdapterRv.notifyDataSetChanged();
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.getStackTrace();
+            }
+        });
+        mTrailersRequestQueue = Volley.newRequestQueue(this);
+        mTrailersRequestQueue.add(request);
     }
 
     @Override
@@ -94,12 +213,8 @@ public class DetailActivity extends AppCompatActivity {
         String releaseDate = movieItem.getReleaseDate();
         double userRatingDouble = movieItem.getUserRating();
         String userRating = Double.toString(userRatingDouble);
+        int id = movieItem.getId();
 
-//        ImageView imageView = findViewById(R.id.iv_movie_poster);
-//        TextView textViewTitle = findViewById(R.id.tv_original_title);
-//        TextView textViewSynopsis = findViewById(R.id.tv_synopsis);
-//        TextView textViewReleaseDate = findViewById(R.id.tv_release_date);
-//        TextView textViewRating = findViewById(R.id.tv_user_rating);
 
         Picasso.with(this)
                 .load(imageUrl)
@@ -107,13 +222,19 @@ public class DetailActivity extends AppCompatActivity {
                 .error(R.drawable.user_placeholder_error)
                 .into(imageView);
         textViewTitle.setText(originalTitle);
+//        textViewTitle.setText(movieid);
         textViewSynopsis.setText(synopsis);
         textViewReleaseDate.setText(releaseDate);
         textViewRating.setText(userRating);
+
+        MOVIE_ID = Integer.toString(id);
+        reviewsURL = BASE_URL + MOVIE_ID + reviewsEndPoint + API_KEY;
+        trailersURL = BASE_URL + MOVIE_ID + trailersEndPoint + API_KEY;
+        parceTrailersJson();
+        parceReviewsJson();
     }
 
     public void onFavouriteCheckboxClicked(View view) {
-//        CheckBox favouriteCheckBox = findViewById(R.id.favourite_star);
         if (favouriteCheckBox.isChecked()) {
             addToFavorites();
             Toast.makeText(this,
@@ -215,39 +336,22 @@ public class DetailActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(menuItem);
     }
 
-//    private void parceJson(String chosenURL) {
-//        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, chosenURL, null,
-//                new Response.Listener<JSONObject>() {
-//                    @Override
-//                    public void onResponse(JSONObject response) {
-//                        try {
-//                            JSONArray moviesResultsJasonArray = response.getJSONArray("results");
-//                            for (int i = 0; i < moviesResultsJasonArray.length(); i++) {
-//                                JSONObject movieResult = moviesResultsJasonArray.getJSONObject(i);
-//                                MovieUtils movieItem = new MovieUtils();
-//                                movieItem.setMoviePosterUrl(baseImageUrl + movieResult.getString("poster_path"));
-//                                movieItem.setId(movieResult.getInt("id"));
-//                                movieItem.setOriginalTitle(movieResult.getString("original_title"));
-//                                movieItem.setSynopsis(movieResult.getString("overview"));
-//                                movieItem.setReleaseDate(movieResult.getString("release_date"));
-//                                movieItem.setUserRating(movieResult.getDouble("vote_average"));
-//                                mMovieList.add(movieItem);
-//                            }
-//                            mMovieAdapterRv = new MovieAdapterRV(MainActivity.this, mMovieList);
-//                            mRecycterView.setAdapter(mMovieAdapterRv);
-//                            mMovieAdapterRv.notifyDataSetChanged();
-//                            mMovieAdapterRv.setOnItemClickListener(MainActivity.this);
-//                        } catch (JSONException e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                }, new Response.ErrorListener() {
-//            @Override
-//            public void onErrorResponse(VolleyError error) {
-//                error.getStackTrace();
+
+//    public static List<TrailerObject> parseTrailerJson(String json) {
+//        List<TrailerObject> trailersList = new ArrayList<>();
+//        try {
+//            JSONObject rootTrailerJsonObject = new JSONObject(json);
+//            JSONArray rootTrailersArray = rootTrailerJsonObject.getJSONArray(ROOT_JSON);
+//            for (int i = 0; i < rootTrailersArray.length(); i++) {
+//                JSONObject trailersJsonObject = rootTrailersArray.getJSONObject(i);
+//
+//                String trailerKey = trailersJsonObject.getString(TRAILER_KEY);
+//                String trailerName = trailersJsonObject.getString(TRAILER_NAME);
+//                trailersList.add(new TrailerObject(trailerKey, trailerName));
 //            }
-//        });
-//        mRequestQueue = Volley.newRequestQueue(this);
-//        mRequestQueue.add(request);
+//        } catch (JSONException e) {
+//            e.printStackTrace();
+//        }
+//        return trailersList;
 //    }
 }
