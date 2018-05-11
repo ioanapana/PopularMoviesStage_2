@@ -26,20 +26,20 @@ public class CostumCursorAdapterFavM extends RecyclerView.Adapter<CostumCursorAd
     // Class variables for the Cursor that holds task data and the Context
     private android.database.Cursor mCursor;
     private Context mContext;
-    private List<MovieUtils> mMovieList;
-    private OnItemClickListener mListener;
+    private List<MovieUtils> mFavMovieList;
+    private OnItemClickListener mFavListener;
 
     public interface OnItemClickListener {
         void onItemClick(int position);
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
-        mListener = listener;
+        mFavListener = listener;
     }
 
     public CostumCursorAdapterFavM(Context context, List<MovieUtils> movieList) {
         mContext = context;
-        mMovieList = movieList;
+        mFavMovieList = movieList;
     }
 
     @Override
@@ -118,10 +118,10 @@ public class CostumCursorAdapterFavM extends RecyclerView.Adapter<CostumCursorAd
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    if (mListener != null) {
+                    if (mFavListener != null) {
                         int position = getAdapterPosition();
                         if (position != RecyclerView.NO_POSITION) {
-                            mListener.onItemClick(position);
+                            mFavListener.onItemClick(position);
                         }
                     }
                 }
