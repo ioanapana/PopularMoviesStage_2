@@ -50,7 +50,7 @@ public class TrailersAdapterRV extends RecyclerView.Adapter<TrailersAdapterRV.Tr
     @Override
     public void onBindViewHolder(TrailerViewHolder holder, int position) {
 
-       currentTrailer = mTrailerList.get(position);
+        currentTrailer = mTrailerList.get(position);
 
         TextView trailerName = holder.trailerName;
         trailerName.setText(currentTrailer.getNameTrailer());
@@ -71,22 +71,13 @@ public class TrailersAdapterRV extends RecyclerView.Adapter<TrailersAdapterRV.Tr
             trailerName = itemView.findViewById(R.id.tv_name_video);
 
             itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    Intent youtubeIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(currentTrailer.getSiteTrailer()));
-                mContext.startActivities(new Intent[]{youtubeIntent});
-                    }
-                }
+                                            @Override
+                                            public void onClick(View view) {
+                                                Intent youtubeIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(currentTrailer.getSiteTrailer()));
+                                                mContext.startActivities(new Intent[]{youtubeIntent});
+                                            }
+                                        }
             );
-
-//            playVideo.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                Intent youtubeIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(currentTrailer.getSiteTrailer()));
-//                mContext.startActivities(new Intent[]{youtubeIntent});
-//            }
-//        });
-
         }
     }
 }

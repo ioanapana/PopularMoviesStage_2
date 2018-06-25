@@ -3,7 +3,7 @@ package com.example.work_pana.popularmoviesstage_one.models;
 import android.os.Parcel;
 import android.os.Parcelable;
 
-public class MovieUtils implements Parcelable{
+public class MovieUtils implements Parcelable {
     private String mMoviePosterUrl;
     private String mOriginalTitle;
     private String mSynopsis;
@@ -11,28 +11,18 @@ public class MovieUtils implements Parcelable{
     private String mReleaseDate;
     private int mId;
 
-//    public MovieUtils(String moviePosterUrl, String originalTitle, String synopsis, double userRating, String releaseDate, int id) {
-//        this.mMoviePosterUrl = moviePosterUrl;
-//        this.mOriginalTitle = originalTitle;
-//        this.mSynopsis = synopsis;
-//        this.mUserRating = userRating;
-//        this.mReleaseDate = releaseDate;
-//        this.mId = id;
-//    }
-    public MovieUtils(){
+    public MovieUtils(String moviePosterUrl, String originalTitle, String synopsis, double userRating, String releaseDate, int id) {
+        this.mMoviePosterUrl = moviePosterUrl;
+        this.mOriginalTitle = originalTitle;
+        this.mSynopsis = synopsis;
+        this.mUserRating = userRating;
+        this.mReleaseDate = releaseDate;
+        this.mId = id;
+    }
+
+    public MovieUtils() {
 
     }
-//    public MovieUtils(String moviePosterUrl) {
-//        this.mMoviePosterUrl = moviePosterUrl;
-//    }
-//
-//    public MovieUtils(String moviePosterUrl, String originalTitle, String synopsis, double userRating, String releaseDate){
-//        this.mMoviePosterUrl = moviePosterUrl;
-//        this.mOriginalTitle = originalTitle;
-//        this.mSynopsis = synopsis;
-//        this.mUserRating = userRating;
-//        this.mReleaseDate = releaseDate;
-//    }
 
     protected MovieUtils(Parcel in) {
         mMoviePosterUrl = in.readString();
@@ -118,5 +108,9 @@ public class MovieUtils implements Parcelable{
         parcel.writeString(mReleaseDate);
         parcel.writeInt(mId);
     }
+
+//    public void setTag(int tag) {
+//        this.tag = tag;
+//    }
 }
 

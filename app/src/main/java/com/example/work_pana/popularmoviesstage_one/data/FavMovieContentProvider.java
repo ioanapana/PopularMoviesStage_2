@@ -34,7 +34,9 @@ public class FavMovieContentProvider extends ContentProvider {
         return sUriMatcher;
     }
 
-    /** Database helper object */
+    /**
+     * Database helper object
+     */
     private FavMovieDbHelper mFavMovieDbHelper;
 
     @Override
@@ -68,20 +70,20 @@ public class FavMovieContentProvider extends ContentProvider {
                         null,
                         sortOrder);
                 break;
-//            case FAV_MOVIE_ID:
-//                // For the fragrance_ID code, extract out the ID from the URI.
-//                selection = FavMovieDbContract.MovieEntry._ID + "=?";
-//                selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
-//                // This will perform a query on the movie table where the chosen _id return a
-//                // Cursor containing that row of the table.
-//                cursor = database.query(FavMovieDbContract.MovieEntry.TABLE_NAME,
-//                        projection,
-//                        selection,
-//                        selectionArgs,
-//                        null,
-//                        null,
-//                        sortOrder);
-//                break;
+            case FAV_MOVIE_ID:
+                // For the fragrance_ID code, extract out the ID from the URI.
+                selection = FavMovieDbContract.MovieEntry._ID + "=?";
+                selectionArgs = new String[]{String.valueOf(ContentUris.parseId(uri))};
+                // This will perform a query on the movie table where the chosen _id return a
+                // Cursor containing that row of the table.
+                cursor = database.query(FavMovieDbContract.MovieEntry.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder);
+                break;
             default:
                 throw new IllegalArgumentException("Cannot query unknown URI " + uri);
         }
@@ -131,7 +133,7 @@ public class FavMovieContentProvider extends ContentProvider {
                 // Get the task ID from the URI path
                 String movieId = uri.getPathSegments().get(1);
                 // Use selections/selectionArgs to filter for this ID
-                movieDeleted = database.delete(FavMovieDbContract.MovieEntry.TABLE_NAME, "_id=?", new String[]{movieId});
+                movieDeleted = database.delete(FavMovieDbContract.MovieEntry.TABLE_NAME, "movie_id=?", new String[]{movieId});
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);

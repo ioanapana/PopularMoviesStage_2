@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements com.example.work_
     private CostumCursorAdapterFavM mAdapterFavM;
 
     private List<MovieUtils> mMovieList;
+    private List<MovieUtils> mFavMovieList;
     private RequestQueue mRequestQueue;
     private Spinner spinner;
     private String movieListBaseURL = "http://api.themoviedb.org/3";
@@ -51,11 +52,8 @@ public class MainActivity extends AppCompatActivity implements com.example.work_
     private String popularMoviesURL = movieListBaseURL + popularMoviesEndpoint + apiKey;
     private String topRatedMoviesURL = movieListBaseURL + topRatedMoviesEndpoint + apiKey;
     private String baseImageUrl = "http://image.tmdb.org/t/p/w185";
-    private static final int MOVIE_LOADER_ID = 0;
-    // Constants for logging and referring to a unique loader
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int FAV_MOVIE_LOADER_ID = 0;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,12 +63,11 @@ public class MainActivity extends AppCompatActivity implements com.example.work_
         spinner = findViewById(R.id.spinner_sort_by);
         mMovieList = new ArrayList<>();
         mMovieAdapterRv = new MovieAdapterRV(getApplicationContext(), mMovieList);
-
+        mFavMovieList = new ArrayList<>();
+        mAdapterFavM = new CostumCursorAdapterFavM(getApplicationContext(), mFavMovieList);
         RecyclerView.LayoutManager layoutManager = new GridLayoutManager(MainActivity.this, 2);
         mRecycterView.setLayoutManager(layoutManager);
         mRecycterView.setAdapter(mMovieAdapterRv);
-        // Initialize the favourite movie adapter
-        mAdapterFavM = new CostumCursorAdapterFavM(getApplicationContext(), mMovieList);
         mRecycterView.setHasFixedSize(true);
         parceJson(popularMoviesURL);
         setupSort();
@@ -101,6 +98,7 @@ public class MainActivity extends AppCompatActivity implements com.example.work_
         getSupportLoaderManager().initLoader(FAV_MOVIE_LOADER_ID, null, this);
     }
 
+    // Movie parceing method
     private void parceJson(String chosenURL) {
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, chosenURL, null,
                 new Response.Listener<JSONObject>() {
@@ -136,6 +134,8 @@ public class MainActivity extends AppCompatActivity implements com.example.work_
         mRequestQueue = Volley.newRequestQueue(this);
         mRequestQueue.add(request);
     }
+
+    // Sorting method via Spinner
 
     public void setupSort() {
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this, R.array.range_by,
@@ -185,9 +185,14 @@ public class MainActivity extends AppCompatActivity implements com.example.work_
         Intent detailIntent = new Intent(this, com.example.work_pana.popularmoviesstage_one.DetailActivity.class);
         detailIntent.putExtra(EXTRA_MOVIE, mMovieList.get(position));
         startActivity(detailIntent);
-
     }
 
+    @Override
+    public void onItemClick(MovieUtils movie) {
+        Intent detailIntent = new Intent(this, com.example.work_pana.popularmoviesstage_one.DetailActivity.class);
+        detailIntent.putExtra(EXTRA_MOVIE, movie);
+        startActivity(detailIntent);
+    }
     ///////////////////////////////////////// L O A D E R ///////////////////
 
     /**

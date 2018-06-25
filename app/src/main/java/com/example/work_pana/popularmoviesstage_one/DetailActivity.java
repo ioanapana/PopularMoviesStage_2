@@ -1,5 +1,6 @@
 package com.example.work_pana.popularmoviesstage_one;
 
+import android.annotation.SuppressLint;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -15,6 +16,7 @@ import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.support.design.widget.FloatingActionButton;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -28,6 +30,7 @@ import com.example.work_pana.popularmoviesstage_one.adapters.TrailersAdapterRV;
 import com.example.work_pana.popularmoviesstage_one.models.MovieUtils;
 import com.example.work_pana.popularmoviesstage_one.models.ReviewObject;
 import com.example.work_pana.popularmoviesstage_one.models.TrailerObject;
+import com.example.work_pana.popularmoviesstage_one.utils.FavMoviesUtils;
 import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
@@ -39,6 +42,8 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+
+import static com.example.work_pana.popularmoviesstage_one.data.FavMovieDbContract.MovieEntry.CONTENT_URI;
 
 /**
  * Created by Work-Pana on 3/26/2018.
@@ -55,13 +60,9 @@ public class DetailActivity extends AppCompatActivity {
     TextView textViewReleaseDate;
     @BindView(R.id.tv_release_date)
     TextView textViewRating;
-    @BindView(R.id.favourite_star)
-    CheckBox favouriteCheckBox;
     public static final String EXTRA_MOVIE = "EXTRA_MOVIE";
     private static final String SAVE_STATE_FAVOURITE = "favoutite_movie";
     MovieUtils movieItem;
-    private Uri mCurrentMovieUri;
-    private boolean mIsFavourite;
 
     private RecyclerView mReviewRecycterView;
     private ReviewAdapterRV mReviewAdapterRv;
@@ -72,27 +73,19 @@ public class DetailActivity extends AppCompatActivity {
     private RequestQueue mReviewsRequestQueue;
     private RequestQueue mTrailersRequestQueue;
     private String API_KEY = "api_key=df27df00b2916dd211edca6241aea543";
-
-
-    /////////////////////////////////////////////////////////MODIFICA!!!!
-    //Constants for creating the URL
-    private static final String BASE_URL
-            = "https://api.themoviedb.org/3/movie/";
-
+    private static final String BASE_URL = "https://api.themoviedb.org/3/movie/";
     private String MOVIE_ID;
     private static String reviewsEndPoint = "/reviews?";
     private static String trailersEndPoint = "/videos?";
     private String reviewsURL;
     private String trailersURL;
-
+    FloatingActionButton favoriteViewDetailsContent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.movie_detail);
         ButterKnife.bind(this);
-//         MOVIE_ID = movieItem.getId();
-
 
         mReviewRecycterView = findViewById(R.id.rv_reviews);
         mReviewList = new ArrayList<>();
@@ -110,25 +103,52 @@ public class DetailActivity extends AppCompatActivity {
         mTrailerRecyclerView.setAdapter(mTrailerAdapterRV);
         mTrailerRecyclerView.setHasFixedSize(true);
 
-
         Intent intent = getIntent();
         if (intent != null) {
 
             if (intent.hasExtra(EXTRA_MOVIE)) {
                 movieItem = intent.getParcelableExtra(EXTRA_MOVIE);
-                // Display the current selected movie title on the Action Bar
                 getSupportActionBar().setTitle(movieItem.getOriginalTitle());
-
                 populateUI();
-
             }
         }
 
-        if (savedInstanceState != null) {
-            mIsFavourite = savedInstanceState.getBoolean(SAVE_STATE_FAVOURITE);
+        //favorite button that will show if a movie is in the favorite list or not
+        favoriteViewDetailsContent = findViewById(R.id.favorite_details_content);
+        if (FavMoviesUtils.isAlreadyFavorite(this, movieItem.getId())) {
+            favoriteViewDetailsContent.setImageResource(R.drawable.ic_favourite_star_yellow);
+        } else {
+            favoriteViewDetailsContent.setImageResource(R.drawable.ic_favourite_star);
         }
 
+        //onClickListener pe favorite Button that will help to put or remove a movie in/from the
+        //favorite movie list
+        favoriteViewDetailsContent.setOnClickListener(new View.OnClickListener() {
+            @SuppressLint("NewApi")
+            @Override
+            public void onClick(View v) {
+                if (FavMoviesUtils.isAlreadyFavorite(DetailActivity.this,
+                        movieItem.getId())) {
+                    favoriteViewDetailsContent.setImageResource(R.drawable.ic_favourite_star);
+                    int moviesRemoved = FavMoviesUtils.removeFromFavorite(
+                            DetailActivity.this, movieItem.getId());
+                    if (moviesRemoved > 0) Toast.makeText(DetailActivity.this,
+                            getString(R.string.movie_deleted), Toast.LENGTH_SHORT).show();
+
+                } else {
+                    favoriteViewDetailsContent.setImageResource(R.drawable.ic_favourite_star_yellow);
+                    ContentValues cv = FavMoviesUtils.addMovieToFavoritesList(movieItem);
+                    Uri uri = getContentResolver().insert(CONTENT_URI, cv);
+                    if (uri != null)
+                        Toast.makeText(DetailActivity.this, getString(R.string.movie_added),
+                                Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
+
+
+    //Metgod for searching the trailers
 
     private void parceTrailersJson() {
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, trailersURL, null,
@@ -150,7 +170,7 @@ public class DetailActivity extends AppCompatActivity {
                             mTrailerAdapterRV = new TrailersAdapterRV(DetailActivity.this, mTrailerList);
                             mTrailerRecyclerView.setAdapter(mTrailerAdapterRV);
                             mTrailerAdapterRV.notifyDataSetChanged();
-//                            mTrailerAdapterRV.setOnItemClickListener(DetailActivity.this);
+
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -165,8 +185,8 @@ public class DetailActivity extends AppCompatActivity {
         mReviewsRequestQueue.add(request);
     }
 
+    // Method for searching the reviews
     private void parceReviewsJson() {
-
         JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, reviewsURL, null,
                 new Response.Listener<JSONObject>() {
                     @Override
@@ -199,11 +219,7 @@ public class DetailActivity extends AppCompatActivity {
         mTrailersRequestQueue.add(request);
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        outState.putBoolean(SAVE_STATE_FAVOURITE, mIsFavourite);
-    }
+    // Methot that populates the UI
 
     public void populateUI() {
 
@@ -214,15 +230,12 @@ public class DetailActivity extends AppCompatActivity {
         double userRatingDouble = movieItem.getUserRating();
         String userRating = Double.toString(userRatingDouble);
         int id = movieItem.getId();
-
-
         Picasso.with(this)
                 .load(imageUrl)
                 .placeholder(R.drawable.user_placeholder_error)
                 .error(R.drawable.user_placeholder_error)
                 .into(imageView);
         textViewTitle.setText(originalTitle);
-//        textViewTitle.setText(movieid);
         textViewSynopsis.setText(synopsis);
         textViewReleaseDate.setText(releaseDate);
         textViewRating.setText(userRating);
@@ -234,98 +247,6 @@ public class DetailActivity extends AppCompatActivity {
         parceReviewsJson();
     }
 
-    public void onFavouriteCheckboxClicked(View view) {
-        if (favouriteCheckBox.isChecked()) {
-            addToFavorites();
-            Toast.makeText(this,
-                    "Added to favourite", Toast.LENGTH_LONG).show();
-
-        } else {
-            removeFromFavorites();
-            Toast.makeText(this,
-                    "Deleted from favourite", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    /**
-     * Method that adds selected movie to the database using the Content Resolver
-     */
-    public void addToFavorites() {
-
-        ContentValues contentValues = new ContentValues();
-
-        contentValues.put(com.example.work_pana.popularmoviesstage_one.data.FavMovieDbContract.MovieEntry.COLUMN_MOVIE_ID, movieItem.getId());
-        contentValues.put(com.example.work_pana.popularmoviesstage_one.data.FavMovieDbContract.MovieEntry.COLUMN_POSTER_URL, movieItem.getMoviePosterUrl());
-        contentValues.put(com.example.work_pana.popularmoviesstage_one.data.FavMovieDbContract.MovieEntry.COLUMN_TITLE, movieItem.getOriginalTitle());
-        contentValues.put(com.example.work_pana.popularmoviesstage_one.data.FavMovieDbContract.MovieEntry.COLUMN_OVERVIEW, movieItem.getSynopsis());
-        contentValues.put(com.example.work_pana.popularmoviesstage_one.data.FavMovieDbContract.MovieEntry.COLUMN_RELEASE_DATE, movieItem.getReleaseDate());
-        contentValues.put(com.example.work_pana.popularmoviesstage_one.data.FavMovieDbContract.MovieEntry.COLUMN_RATING, movieItem.getUserRating());
-
-        try {
-            mCurrentMovieUri = getContentResolver().insert(com.example.work_pana.popularmoviesstage_one.data.FavMovieDbContract.MovieEntry.CONTENT_URI,
-                    contentValues);
-        } catch (IllegalArgumentException e) {
-            mCurrentMovieUri = null;
-        }
-
-        if (mCurrentMovieUri != null) {
-            isAddedToFavorites();
-        }
-
-    }
-
-    /**
-     * Method to delete a movie from the database
-     */
-    private void removeFromFavorites() {
-        int rowsDeleted;
-
-        if (mCurrentMovieUri != null) {
-            rowsDeleted = getContentResolver().delete(
-                    mCurrentMovieUri,
-                    null,
-                    null);
-        }
-    }
-
-    /**
-     * Method that checks if the current movie is currently into the database
-     * by queering it with the help of the Content resolver
-     *
-     * @return boolean whether it's in the database or not
-     */
-    private boolean isAddedToFavorites() {
-        boolean isFavorite = false;
-
-        String[] projection = {com.example.work_pana.popularmoviesstage_one.data.FavMovieDbContract.MovieEntry.COLUMN_MOVIE_ID};
-        String selection = com.example.work_pana.popularmoviesstage_one.data.FavMovieDbContract.MovieEntry.COLUMN_MOVIE_ID + "=?";
-        String[] selectionArgs = new String[]{
-                String.valueOf(movieItem.getId())};
-
-        Cursor cursor = this.getContentResolver().query(
-                com.example.work_pana.popularmoviesstage_one.data.FavMovieDbContract.MovieEntry.CONTENT_URI,
-                projection,
-                selection,
-                selectionArgs,
-                null
-        );
-
-        if (cursor != null && cursor.moveToFirst()) {
-            if (cursor.getCount() > 0) {
-                isFavorite = true;
-                long currentIndex = cursor.getLong(cursor.getColumnIndex(com.example.work_pana.popularmoviesstage_one.data.FavMovieDbContract.MovieEntry.COLUMN_MOVIE_ID));
-                mCurrentMovieUri = ContentUris.withAppendedId(com.example.work_pana.popularmoviesstage_one.data.FavMovieDbContract.MovieEntry.CONTENT_URI, currentIndex);
-            } else {
-                isFavorite = false;
-
-                mCurrentMovieUri = null;
-            }
-            cursor.close();
-        }
-
-        return isFavorite;
-    }
-
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         switch (menuItem.getItemId()) {
@@ -335,23 +256,4 @@ public class DetailActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(menuItem);
     }
-
-
-//    public static List<TrailerObject> parseTrailerJson(String json) {
-//        List<TrailerObject> trailersList = new ArrayList<>();
-//        try {
-//            JSONObject rootTrailerJsonObject = new JSONObject(json);
-//            JSONArray rootTrailersArray = rootTrailerJsonObject.getJSONArray(ROOT_JSON);
-//            for (int i = 0; i < rootTrailersArray.length(); i++) {
-//                JSONObject trailersJsonObject = rootTrailersArray.getJSONObject(i);
-//
-//                String trailerKey = trailersJsonObject.getString(TRAILER_KEY);
-//                String trailerName = trailersJsonObject.getString(TRAILER_NAME);
-//                trailersList.add(new TrailerObject(trailerKey, trailerName));
-//            }
-//        } catch (JSONException e) {
-//            e.printStackTrace();
-//        }
-//        return trailersList;
-//    }
 }

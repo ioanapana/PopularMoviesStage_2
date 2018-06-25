@@ -29,8 +29,9 @@ public class CostumCursorAdapterFavM extends RecyclerView.Adapter<CostumCursorAd
     private List<MovieUtils> mFavMovieList;
     private OnItemClickListener mFavListener;
 
+
     public interface OnItemClickListener {
-        void onItemClick(int position);
+        void onItemClick(MovieUtils movie);
     }
 
     public void setOnItemClickListener(OnItemClickListener listener) {
@@ -52,7 +53,7 @@ public class CostumCursorAdapterFavM extends RecyclerView.Adapter<CostumCursorAd
     /**
      * Called by the RecyclerView to display data at a specified position in the Cursor.
      *
-     * @param holder The ViewHolder to bind Cursor data to
+     * @param holder   The ViewHolder to bind Cursor data to
      * @param position The position of the data in the Cursor
      */
     @Override
@@ -111,22 +112,43 @@ public class CostumCursorAdapterFavM extends RecyclerView.Adapter<CostumCursorAd
          *
          * @param itemView The view inflated in onCreateViewHolder
          */
+
         public FavMovieViewHolder(View itemView) {
             super(itemView);
             itemFavMovieImageView = itemView.findViewById(R.id.iv_movie);
-
             itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (mFavListener != null) {
-                        int position = getAdapterPosition();
-                        if (position != RecyclerView.NO_POSITION) {
-                            mFavListener.onItemClick(position);
-                        }
-                    }
-                }
-            });
+                                            @Override
+                                            public void onClick(View view) {
+                                                mCursor.moveToPosition(getAdapterPosition());
 
+                                                int idIndex = mCursor.getColumnIndex(FavMovieDbContract.MovieEntry.COLUMN_MOVIE_ID);
+                                                int posterIndex = mCursor.getColumnIndex(FavMovieDbContract.MovieEntry.COLUMN_POSTER_URL);
+                                                int titleIndex = mCursor.getColumnIndex(FavMovieDbContract.MovieEntry.COLUMN_TITLE);
+                                                int synopsisIndex = mCursor.getColumnIndex(FavMovieDbContract.MovieEntry.COLUMN_OVERVIEW);
+                                                int releaseDateIndex = mCursor.getColumnIndex(FavMovieDbContract.MovieEntry.COLUMN_RELEASE_DATE);
+                                                int ratingIndex = mCursor.getColumnIndex(FavMovieDbContract.MovieEntry.COLUMN_RATING);
+
+                                                // Determine the values of the wanted data
+                                                int id = mCursor.getInt(idIndex);
+                                                String moviePosterUrl = mCursor.getString(posterIndex);
+                                                String originalTitle = mCursor.getString(titleIndex);
+                                                String synopsis = mCursor.getString(synopsisIndex);
+                                                String releaseDate = mCursor.getString(releaseDateIndex);
+                                                double userRating = mCursor.getDouble(ratingIndex);
+
+                                                MovieUtils movie = new MovieUtils(moviePosterUrl, originalTitle, synopsis, userRating, releaseDate, id);
+
+                                                //Set values
+                                                movie.setId(id);
+                                                Picasso.with(mContext).load(moviePosterUrl).into(itemFavMovieImageView);
+                                                movie.setOriginalTitle(originalTitle);
+                                                movie.setSynopsis(synopsis);
+                                                movie.setReleaseDate(releaseDate);
+                                                movie.setUserRating(userRating);
+                                                mFavListener.onItemClick(movie);
+                                            }
+                                        }
+            );
         }
     }
 }
