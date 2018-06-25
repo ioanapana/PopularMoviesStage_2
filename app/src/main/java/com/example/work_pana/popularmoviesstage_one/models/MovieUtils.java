@@ -109,8 +109,8 @@ public class MovieUtils implements Parcelable {
         parcel.writeInt(mId);
     }
 
-//    public void setTag(int tag) {
-//        this.tag = tag;
-//    }
+    public void setTag(int tag) {
+        
+    }
 }
 
